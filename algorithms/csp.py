@@ -60,8 +60,38 @@ def backtracking_search(csp, domains=None, select_variable=None,
                 trace.restore(parent, snapshot(parent), variable)
         return result
 
-    # TODO: Add your code here
-    raise NotImplementedError
+      
+      #Este es el código que le mandé a Claude
+      
+      #def expand (assignment):
+            #if len(assignment)==len(csp.variables):
+             # return assignment
+            #x=choose(csp, assignment, domains)
+            #for v in ordered (csp, x, assignment, domains):
+              #if consistent(x, v, assignment):
+                #nueva=copy(assignment)
+                #resultado=search(nueva)
+                #if resultado is not None:
+                  #return resultado
+            #return None
+            
+      #Y me respondió esto:
+      #nueva=copy(assignment) no agrega x = v. Copias la asignación, pero nunca le pones el valor que acabas de validar. Entonces search(nueva) recibiría la misma asignación de antes, y choose devolvería otra vez la misma x: recursión infinita. Además, copy no está importado.
+      #Entonces eso fue lo  que corregí en mi código
+      
+    def expand (assignment):
+      if len(assignment)==len(csp.variables):
+        return assignment
+      x=choose(csp, assignment, domains)
+      for v in ordered (csp, x, assignment, domains):
+        if consistent(x, v, assignment):
+          nueva=assignment.copy()
+          nueva[x]=v
+          resultado=search(nueva)
+          if resultado is not None:
+            return resultado
+      return None
+            
     # FIN DEL BLOQUE DEL ESTUDIANTE
 
     return search({})
@@ -78,8 +108,35 @@ def revise(csp, x, y, domains):
       entre ese par de tareas, respetando la dirección de las precedencias.
     - Si elimina elementos mientras recorre una lista, itere sobre una copia.
     """
-    # TODO: Add your code here
-    raise NotImplementedError
+  
+  #Este es el código que le mandé a Claude
+  
+  #cambio=False
+  #for vx in list(domains[x]):
+    #soporte=False
+    #for vy in domains[y]:
+      #if csp.compatible(x, vx, y, vy):
+        #soporte=True
+        #break
+    #if not soporte:
+      #domains[x].remove(vx)
+      #cambio=True
+  #return cambio
+      
+    #y me respondió .delete(vx) no existe en las listas. El método de la clase list para quitar un valor es .remove(vx).
+    #entonces corregí eso
+  
+    cambio=False
+    for vx in list(domains[x]):
+      soporte=False
+      for vy in domains[y]:
+        if csp.compatible(x, vx, y, vy):
+          soporte=True
+          break
+      if not soporte:
+        domains[x].remove(vx)
+        cambio=True
+    return cambio
     # FIN DEL BLOQUE DEL ESTUDIANTE
 
 
@@ -93,8 +150,44 @@ def ac3(csp, domains):
       csp.neighbors[x] contiene los vecinos de x.
     - revise(csp, x, y, domains) retorna si modificó domains[x].
     """
-    # TODO: Add your code here
-    raise NotImplementedError
+    """
+    Este es el código que le mandé a Claude
+    
+    cola=[]
+    for x in csp.variables:
+      for y in csp.neighbors[x]:
+        cola.append((x,y))
+    while len(cola)>0:
+      (x,y)=cola.pop(0)
+      if revise(csp, x,y,domains):
+        if domains[x].isempty():
+          return False
+        for z in csp.neighbors[x]:
+          cola.insert(cola,(z,x))
+    return True
+    
+    me dijo que
+    
+    1. domains[x].isempty(): las listas no tienen ese método. Se usa len(domains[x]) == 0 o not domains[x].
+    2. Falta z != y. El pseudocódigo (línea 9) solo agrega los vecinos distintos de y.
+    3. cola.insert(cola,(z,x)) está mal: insert es un método de list que pide una posición. Para agregar al final se usa cola.append((z, x)).
+    
+    entonces hice esos cambios
+    """
+    cola=[]
+    for x in csp.variables:
+      for y in csp.neighbors[x]:
+        cola.append((x,y))
+    while len(cola)>0:
+      (x,y)=cola.pop(0)
+      if revise(csp, x,y,domains):
+        if len(domains[x])==0:
+          return False
+        for z in csp.neighbors[x]:
+          if z!=y:
+            cola.append((z,x))
+    return True
+  
     # FIN DEL BLOQUE DEL ESTUDIANTE
 
 
