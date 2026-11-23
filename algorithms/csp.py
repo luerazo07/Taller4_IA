@@ -199,11 +199,57 @@ def select_unassigned_variable(csp, assignment, domains):
       compatible con la asignación parcial. Los dominios deben conservarse.
     - csp.neighbors[x] contiene sus vecinos; csp.variables conserva el orden
       original para los desempates.
-    """
-    # TODO: Add your code here
-    raise NotImplementedError
-    # FIN DEL BLOQUE DEL ESTUDIANTE
+    
+    Esta fue mi version original
+    
+    mejorLlave = None
+    mejorVar = None
+    for i,var in enumerate(csp.variables):
+      if var in assignment:
+          continue
+      legales = [v for v in domains[var] if csp.consistent(var,v,assignment)]
+      vecinos = csp.neighbors(var)
+      llave = (len(legales),-vecinos,i)
+      
+      if mejorLlave is None or llave < mejorLlave:
+        mejorVar = var
+        mejorLlave = llave
+        
+    return mejorVar
+    
+    a partir de aqui le pedi a la IA de Claude que revisara mi codigo para verificar que errores podia tener y que cosas podia mejorar, su respuesta fue la siguiente:
+    
+    Tu versión está casi lista, la lógica es correcta. Tiene dos errores.
 
+    1. csp.neighbors(var) con paréntesis. Los tips dicen csp.neighbors[x], o sea con corchetes: es un diccionario, no una función. Con paréntesis te da TypeError.
+
+    2. vecinos no es un número. Aunque arregles los corchetes, csp.neighbors[var] es la lista de vecinos, y -vecinos sobre una lista también revienta. Necesitas contar solo los que no están en assignment. 
+    
+    Lo que está bien y no lo toques:
+
+    El filtro de legales con domains[var] y csp.consistent.
+    La llave (len(legales), -vecinos, i) y la comparación llave < mejorLlave.
+    Iniciar con None y el chequeo mejorLlave is None.    
+    
+    Una vez entendi esto procedi a realizar los cambios y esta fue mi version final:
+    
+    """
+    
+    mejorLlave = None
+    mejorVar = None
+    for i,var in enumerate(csp.variables):
+      if var in assignment:
+          continue
+      legales = [v for v in domains[var] if csp.consistent(var,v,assignment)]
+      vecinos = len([n for n in csp.neighbors[var] if n not in assignment])
+      llave = (len(legales),-vecinos,i)
+      
+      if mejorLlave is None or llave < mejorLlave:
+        mejorVar = var
+        mejorLlave = llave
+          
+    return mejorVar
+    # FIN DEL BLOQUE DEL ESTUDIANTE
 
 def order_domain_values(csp, variable, assignment, domains):
     """Punto 3: retorna los valores compatibles ordenados por LCV.
@@ -217,7 +263,60 @@ def order_domain_values(csp, variable, assignment, domains):
       csp.consistent(x, valor, assignment).
     - csp.compatible(variable, valor, vecino, valor_vecino) comprueba cada par
       sin modificar los dominios.
-    """
-    # TODO: Add your code here
-    raise NotImplementedError
+    
+    esta fue mi version inicial del codigo
+
+    candidatos = [v for v in domains[variable] if csp.consistent(variable, v, assignment)]
+    descartados = 0
+    for v in candidatos:
+      for y in csp.neighbors[variable]:
+        if y in assignment:
+          continue
+        for w in domains[y]:
+          if not csp.compatible(variable, v, y, w):
+            descartados += 1
+            
+            
+            
+    En este momento decidi pedirle a la IA de Claude que me diera un poco de orientación pues no tenia del todo claro como manejar el tema de los descartados y el retorno de la funcion, su respuesta fue la siguiente:
+    
+    Vas bien con la estructura (candidatos, vecinos sin asignar, csp.compatible), pero tiene dos errores y le falta el cierre.
+
+    1. descartados es uno solo para todos los candidatos. Lo inicializas una vez antes del for v, entonces va acumulando: el conteo del segundo candidato incluye el del primero. LCV necesita un número por cada v. Hay dos formas:
+
+    Un diccionario descartados = {} y asignas descartados[v] = ... al terminar cada candidato.
+    Reiniciar el contador en 0 dentro del for v, y guardar el par (descartados, v) al final de cada vuelta.
+
+    2. Estás contando todos los w de domains[y]. El enunciado dice que de los vecinos cuentes solo los valores compatibles con la asignación parcial. Entonces el for w debe filtrar primero con el mismo csp.consistent que ya usaste, pero aplicado al vecino:
+
+    python
+    for w in domains[y]:
+        if not csp.consistent(y, w, assignment):
+            continue
+        ...
+
+    Piensa por qué: un w que ya choca con la asignación actual no es un valor que v "te quite", porque ese valor ya estaba perdido.
+
+    3. Falta el final. Después del conteo, tienes que devolver una lista nueva de candidatos ordenada de menor a mayor por descartados. Con sorted(candidatos, key=...) te sirve, y como sorted es estable, los empates conservan el orden original sin que hagas nada más.
+    Eso sí, candidatos ya sale en el orden de domains[variable], que es lo que quieres conservar.
+    
+    Una vez entendido esto, esta fue mi version final del codigo:
+        """
+
+    candidatos = [v for v in domains[variable] if csp.consistent(variable, v, assignment)]
+    descartados = {}
+    for v in candidatos:
+      descartados[v] = 0
+      for y in csp.neighbors[variable]:
+        if y in assignment:
+          continue
+        for w in domains[y]:
+          if not csp.consistent(y, w, assignment):
+                      continue
+          if not csp.compatible(variable, v, y, w):
+            descartados[v] += 1
+    return sorted(candidatos, key=lambda v: descartados[v])
     # FIN DEL BLOQUE DEL ESTUDIANTE
+    
+    
+    

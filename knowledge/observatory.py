@@ -32,6 +32,51 @@ def build_rules():
       objetos Atom como premisas y un Atom como conclusión. La tupla representa
       la conjunción; las variables de la regla se interpretan universalmente.
     """
-    # TODO: Add your code here
-    raise NotImplementedError
+
+    
+    """Reglas
+    1. ∀t ∀p ∀e ( Asignado(t,p) ∧ Requiere(t,e) ∧ Habilitado(p,e) ⇒ Competente(p,t) )
+    2. ∀t ∀z ∀f ( EnZona(t,z) ∧ AislamientoConfirmado(z,f) ∧ SinAlertaConfirmada(z,f) ⇒ Preparada(t,f) )
+    3. ∀t ∀p ∀f ( Programada(t,f) ∧ Asignado(t,p) ∧ Disponible(p,f) ∧ Competente(p,t) ∧ Preparada(t,f) ⇒ Autorizada(t,f) )
+    4. ∀t ∀z ∀f ( Programada(t,f) ∧ EnZona(t,z) ∧ Alerta(z,f) ⇒ Bloqueada(t,f) )
+    5. ∀t ∀z ∀f ( Programada(t,f) ∧ EnZona(t,z) ∧ AislamientoFallido(z,f) ⇒ Bloqueada(t,f) )
+    
+    """
+    
+    r1 = Rule ('R1', 'Un técnico es competente para una tarea si está asignado a ella, la tarea requiere una especialidad y él está habilitado en esa especialidad.',(
+      atom('Asignado', '?t', '?p'),
+      atom('Requiere', '?t', '?e'),
+      atom('Habilitado', '?p', '?e')
+      ,),atom('Competente', '?p', '?t'),
+    )
+    r2 = Rule ('R2', 'Una tarea está preparada en una franja si está en una zona con aislamiento confirmado y ausencia de alerta confirmada para esa misma franja.',(
+      atom('EnZona', '?t', '?z'),
+      atom('AislamientoConfirmado', '?z', '?f'),
+      atom('SinAlertaConfirmada', '?z', '?f')
+      ,),atom('Preparada', '?t', '?f'),
+    )
+    r3 =Rule ('R3', 'Se autoriza una tarea si está programada en esa franja, su técnico asignado está disponible y es competente para ella, y la tarea está preparada.',(
+      atom('Programada', '?t', '?f'),
+      atom('Asignado', '?t', '?p'),
+      atom('Disponible', '?p', '?f'),
+      atom('Competente', '?p', '?t'),
+      atom('Preparada', '?t', '?f')
+      ,),atom('Autorizada', '?t', '?f'),
+    )
+    r4 =Rule ('R4', 'Se bloquea una tarea programada si su zona tiene una alerta en esa franja.',(
+      atom('Programada', '?t', '?f'),
+      atom('EnZona', '?t', '?z'),
+      atom('Alerta', '?z', '?f')
+      ,),atom('Bloqueada', '?t', '?f'),
+    )
+    r5 =Rule ('R5', 'Se bloquea una tarea programada si el aislamiento de su zona falló en esa franja.',(
+      atom('Programada', '?t', '?f'),
+      atom('EnZona', '?t', '?z'),
+      atom('AislamientoFallido', '?z', '?f')
+      ,),atom('Bloqueada', '?t', '?f'),
+    )
+    
+    return(r1,r2,r3,r4,r5)
+    
+    
     # FIN DEL BLOQUE DEL ESTUDIANTE
