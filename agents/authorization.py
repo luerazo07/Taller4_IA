@@ -13,7 +13,14 @@ def select_action(facts, task, slot):
 
     Tips:
     - atom('Bloqueada', task, slot) construye el hecho que puede buscar en facts.
+
+    En esta parte del codigo no se utilizo IA generativa
     """
-    # TODO: Add your code here
-    raise NotImplementedError
-    # FIN DEL BLOQUE DEL ESTUDIANTE
+    bloqueo = atom('Bloqueada', task, slot)
+    autorizacion = atom('Autorizada', task, slot)
+
+    if bloqueo in facts:
+        return 'suspender'
+    if autorizacion in facts:
+        return 'autorizar'
+    return 'solicitar_verificacion'
